@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>배지 관리</title>
+    <style>
+        /* 공통 스타일 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Helvetica Neue", "Segoe UI", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+            background-color: #f4f6f8;
+            color: #333d4b;
+            margin: 0;
+            padding: 24px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px;
+            border-bottom: 1px solid #e5e8eb;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+        }
+        .content-area {
+            padding: 24px;
+        }
+        .filter-grid {
+            border: 1px solid #e5e8eb;
+            border-radius: 8px;
+            padding: 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+        }
+        #form-view .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+        .form-section {
+            margin-bottom: 24px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group.repetition-group {
+            margin-top: 8px;
+        }
+        .form-group label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .form-group small {
+            font-size: 13px;
+            color: #8b95a1;
+            margin-top: 6px;
+            font-weight: 400;
+        }
+        .form-display-text {
+            font-size: 15px;
+            padding: 10px;
+            background-color: #f4f6f8;
+            border-radius: 6px;
+            color: #4e5968;
+            margin: 0;
+        }
+        .form-group input::placeholder, .form-group textarea::placeholder {
+            color: #adb5bd;
+        }
+        .form-group input[type="text"], .form-group input[type="date"], .form-group input[type="url"], .form-group input[type="number"], .form-group input[type="time"], .form-group select, .form-group textarea {
+            padding: 10px;
+            border: 1px solid #d1d6db;
+            border-radius: 6px;
+            font-size: 15px;
+            font-family: inherit;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #0070f3;
+            box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2);
+        }
+        /* 배지 이미지 레이아웃 명시적 수정 */
+        #non-level-badge-image-group label {
+            display: block;
+        }
+        #non-level-badge-image-group input[type="text"] {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e8eb;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        .btn-primary {
+            background-color: #0070f3;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary {
+            background-color: #e5e8eb;
+            color: #4e5968;
+        }
+        .btn-secondary:hover {
+            background-color: #d1d6db;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 24px;
+        }
+        .data-table th, .data-table td {
+            border-bottom: 1px solid #e5e8eb;
+            padding: 12px;
+            text-align: left;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+        .data-table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+        }
+        .data-table tr:hover {
+            background-color: #f0f4ff;
+        }
+        .data-table .action-cell a {
+            color: #0070f3;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .optional-text {
+            font-size: 0.85em;
+            font-weight: 500;
+            color: #8b95a1;
+            margin-left: 4px;
+        }
+        .radio-group label, .checkbox-group label {
+            margin-right: 16px;
+            font-weight: 500;
+        }
+        .level-group {
+            border: 1px solid #e5e8eb;
+            border-radius: 8px;
+            padding: 16px 24px 24px;
+            margin-top: 12px;
+        }
+        .level-group h4 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .reward-entry {
+            background-color: #ffffff;
+            border: 1px solid #d1d6db;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+            position: relative;
+        }
+        .entry-controls {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .order-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .order-label {
+            font-size: 12px;
+            color: #8b95a1;
+            margin-right: 2px;
+        }
+        .btn-control {
+            padding: 4px;
+            background-color: transparent;
+            border: none;
+            color: #4e5968;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            line-height: 1;
+        }
+        .btn-delete {
+            padding: 4px 8px;
+            background-color: #f4f6f8;
+            border: 1px solid #d1d6db;
+            color: #4e5968;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            line-height: 1;
+        }
+        .btn-control:hover, .btn-delete:hover {
+            background-color: #e5e8eb;
+        }
+        .info-box {
+            background-color: #f0f4ff;
+            border: 1px solid #cce5ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .info-box h4 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            color: #0056b3;
+        }
+        .info-box ul {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 14px;
+            color: #333d4b;
+            line-height: 1.6;
+        }
+        .info-box ul li::marker {
+            color: #0070f3;
+        }
+        .sub-options {
+            padding-left: 0; 
+            border-left: none; 
+            margin-top: 16px;
+            display: grid;
+            gap: 16px;
+        }
+        .payout-time-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        #badge-name-preview-container {
+            font-size: 14px;
+            color: #4e5968;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1 id="page-title">배지 관리</h1>
+        <button id="create-badge-btn" class="btn btn-primary" onclick="showFormView()">배지 생성</button>
+    </header>
+
+    <div id="list-view" class="content-area">
+        <div class="filter-grid">
+            <div class="form-group">
+                <label for="filter-badge-name">배지명</label>
+                <input type="text" id="filter-badge-name" placeholder="배지명을 입력하세요">
+            </div>
+            <div class="form-group">
+                <label for="filter-badge-type">배지 유형</label>
+                <select id="filter-badge-type">
+                    <option value="">전체</option>
+                    <option value="general">일반형</option>
+                    <option value="level">레벨형</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="filter-vertical">버티컬</label>
+                <select id="filter-vertical">
+                    <option value="">전체</option>
+                    <option value="common">공통</option>
+                    <option value="daeri">대리</option>
+                    <option value="quick">퀵</option>
+                    <option value="walk">도보</option>
+                    <option value="hancha">한차</option>
+                </select>
+            </div>
+            <div class="form-actions" style="border-top: none; margin-top: 0;">
+                <button class="btn btn-primary">검색</button>
+            </div>
+        </div>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>배지 ID</th>
+                    <th>배지명</th>
+                    <th>배지 유형</th>
+                    <th>버티컬</th>
+                    <th>미션 연동</th>
+                    <th>수정일</th>
+                    <th>관리</th>
+                </tr>
+            </thead>
+            <tbody>
+                 <tr>
+                    <td>BDG004</td>
+                    <td>우수 활동 배지</td>
+                    <td>일반형</td>
+                    <td>한차</td>
+                    <td>대기</td>
+                    <td>2025-08-05</td>
+                    <td class="action-cell">
+                        <a href="#" onclick="showFormView('BDG004')">수정</a>
+                    </td>
+                </tr>
+                 <tr>
+                    <td>BDG003</td>
+                    <td>단골손님 배지</td>
+                    <td>일반형</td>
+                    <td>도보</td>
+                    <td>완료</td>
+                    <td>2025-08-04</td>
+                    <td class="action-cell">
+                        <a href="#" onclick="showFormView('BDG003')">수정</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>BDG002</td>
+                    <td>성실 배송 배지</td>
+                    <td>레벨형</td>
+                    <td>퀵</td>
+                    <td>완료</td>
+                    <td>2025-07-25</td>
+                    <td class="action-cell"><a href="#" onclick="showFormView('BDG002')">수정</a></td>
+                </tr>
+                <tr>
+                    <td>BDG001</td>
+                    <td>첫 주문 완료 배지</td>
+                    <td>일반형</td>
+                    <td>공통</td>
+                    <td>완료</td>
+                    <td>2024-07-28</td>
+                    <td class="action-cell">
+                        <a href="#" onclick="showFormView('BDG001')">수정</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="form-view" class="content-area" style="display: none;">
+        
+        <div class="info-box">
+            <h4>참고해주세요!</h4>
+            <ul>
+                <li>배지 획득 조건, 레벨 달성 조건은 ‘미션 어드민’에서 설정할 수 있습니다.</li>
+                <li>레벨이 있는 경우 레벨별 달성 조건 충족 즉시 업그레이드됩니다.</li>
+            </ul>
+        </div>
+        
+        <form id="badge-form">
+            <div class="form-section">
+                <div id="edit-only-id-display" class="form-grid" style="display: none; margin-bottom: -12px;">
+                    <div class="form-group">
+                        <label>배지 ID</label>
+                        <p id="display-badge-id" class="form-display-text"></p>
+                    </div>
+                </div>
+                <div class="form-grid">
+                     <div class="form-group">
+                        <label for="badge-vertical">등록 버티컬</label>
+                        <select id="badge-vertical" onchange="handleVerticalChange()">
+                            <option value="common">공통</option>
+                            <option value="daeri">대리</option>
+                            <option value="quick">퀵</option>
+                            <option value="walk">도보</option>
+                            <option value="hancha">한차</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="badge-name">배지명</label>
+                        <input type="text" id="badge-name" placeholder="사용자에게 보여지는 배지명(배지 문구 작성 X, 최대 n글자)">
+                        <div id="badge-name-preview-container">
+                            노출 배지명: <strong id="badge-name-preview"></strong>
+                        </div>
+                    </div>
+                     <div class="form-group">
+                        <label for="badge-expiry-date">배지 만료 주기</label>
+                        <p id="badge-expiry-date" class="form-display-text"></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="badge-acquisition-method">배지 획득 방법<span class="optional-text">(선택)</span></label>
+                        <textarea id="badge-acquisition-method" rows="3" placeholder="배지 획득 방법을 텍스트로 입력하세요"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="rewards-url">전체 보상 자세히 보기<span class="optional-text">(선택)</span></label>
+                        <input type="url" id="rewards-url" placeholder="보상 상세 페이지 url 링크 삽입">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-grid">
+                     <div class="form-group">
+                        <label>레벨 적용 여부<span class="optional-text">(선택)</span></label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="level_apply" value="N" checked onchange="toggleLevelSettings(false)"> 미적용</label>
+                            <label><input type="radio" name="level_apply" value="Y" onchange="toggleLevelSettings(true)"> 적용</label>
+                        </div>
+                    </div>
+                    <div id="non-level-badge-image-group" class="form-group">
+                        <label for="badge-image">배지 이미지</label>
+                        <input type="text" id="badge-image" placeholder="배지 이미지 URL을 입력하세요">
+                    </div>
+                </div>
+                <div id="level-details-container" style="display: none;">
+                    <div style="text-align: right; margin-bottom: 16px;">
+                        <button type="button" class="btn btn-secondary btn-small" onclick="applyRewardsToAllLevels()">블루 레벨 보상 일괄 적용</button>
+                    </div>
+                    <div class="level-group">
+                        <h4>블루</h4>
+                        <div id="edit-only-level-id-blue-display" class="form-grid" style="display: none; margin-bottom: 12px;">
+                             <div class="form-group">
+                                <label>레벨 ID</label>
+                                <p id="display-level-id-blue" class="form-display-text"></p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="level-blue-image">배지 이미지</label>
+                            <input type="text" id="level-blue-image" placeholder="블루 레벨의 이미지 URL을 입력하세요">
+                        </div>
+                        <div class="form-group reward-label-group">
+                           <label>블루 레벨 보상</label>
+                        </div>
+                         <div id="rewards-container-blue"></div>
+                         <div style="margin-top: 16px;">
+                            <button type="button" class="btn btn-secondary" onclick="addReward('blue')">+ 블루 보상 추가</button>
+                         </div>
+                    </div>
+                    <div class="level-group">
+                        <h4>레드</h4>
+                        <div id="edit-only-level-id-red-display" class="form-grid" style="display: none; margin-bottom: 12px;">
+                             <div class="form-group">
+                                <label>레벨 ID</label>
+                                <p id="display-level-id-red" class="form-display-text"></p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="level-red-image">배지 이미지</label>
+                            <input type="text" id="level-red-image" placeholder="레드 레벨의 이미지 URL을 입력하세요">
+                        </div>
+                         <div class="form-group reward-label-group">
+                           <label>레드 레벨 보상</label>
+                        </div>
+                         <div id="rewards-container-red"></div>
+                         <div style="margin-top: 16px;">
+                            <button type="button" class="btn btn-secondary" onclick="addReward('red')">+ 레드 보상 추가</button>
+                         </div>
+                    </div>
+                     <div class="level-group">
+                        <h4>퍼플</h4>
+                        <div id="edit-only-level-id-purple-display" class="form-grid" style="display: none; margin-bottom: 12px;">
+                             <div class="form-group">
+                                <label>레벨 ID</label>
+                                <p id="display-level-id-purple" class="form-display-text"></p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="level-purple-image">배지 이미지</label>
+                            <input type="text" id="level-purple-image" placeholder="퍼플 레벨의 이미지 URL을 입력하세요">
+                        </div>
+                         <div class="form-group reward-label-group">
+                           <label>퍼플 레벨 보상</label>
+                        </div>
+                         <div id="rewards-container-purple"></div>
+                         <div style="margin-top: 16px;">
+                            <button type="button" class="btn btn-secondary" onclick="addReward('purple')">+ 퍼플 보상 추가</button>
+                         </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="global-reward-settings" class="form-section">
+                 <div class="form-group">
+                    <label>보상 설정<span class="optional-text">(선택)</span></label>
+                </div>
+                <div id="rewards-container-global">
+                </div>
+                <div style="margin-top: 16px;">
+                     <button type="button" class="btn btn-secondary" onclick="addReward('global')">+ 보상 추가</button>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="showListView()">목록으로</button>
+                <button type="submit" class="btn btn-primary">저장</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const listView = document.getElementById('list-view');
+    const formView = document.getElementById('form-view');
+    const pageTitle = document.getElementById('page-title');
+    const createBtn = document.getElementById('create-badge-btn');
+    const badgeForm = document.getElementById('badge-form');
+    const levelDetailsContainer = document.getElementById('level-details-container');
+    const globalRewardSettings = document.getElementById('global-reward-settings');
+    const nonLevelBadgeImageGroup = document.getElementById('non-level-badge-image-group');
+    let rewardCounter = 0;
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        const verticalSelect = document.getElementById('badge-vertical');
+        const nameInput = document.getElementById('badge-name');
+        verticalSelect.addEventListener('change', updateBadgeNamePreview);
+        nameInput.addEventListener('input', updateBadgeNamePreview);
+    });
+
+    function updateBadgeNamePreview() {
+        const verticalSelect = document.getElementById('badge-vertical');
+        const verticalText = verticalSelect.options[verticalSelect.selectedIndex].text;
+        const nameInput = document.getElementById('badge-name').value;
+        const previewEl = document.getElementById('badge-name-preview');
+
+        if (nameInput.trim() !== '') {
+            previewEl.textContent = `${verticalText} ${nameInput} 배지`;
+        } else {
+            previewEl.textContent = '';
+        }
+    }
+
+    function showFormView(badgeId) {
+        createBtn.style.display = 'none';
+        listView.style.display = 'none';
+        formView.style.display = 'block';
+        badgeForm.reset();
+        rewardCounter = 0;
+        document.querySelectorAll('[id^="rewards-container-"]').forEach(c => c.innerHTML = '');
+        toggleLevelSettings(false);
+        document.getElementById('edit-only-id-display').style.display = 'none';
+        document.querySelectorAll('[id^="edit-only-level-id-"]').forEach(d => d.style.display = 'none');
+        document.getElementById('badge-expiry-date').innerHTML = '다다음주 월요일 14:00 <span class="optional-text">(고정 정책)</span>';
+
+        if (badgeId) {
+            pageTitle.textContent = '배지 수정';
+            document.getElementById('edit-only-id-display').style.display = 'block';
+            document.getElementById('display-badge-id').textContent = badgeId;
+            if (badgeId === 'BDG002') {
+                document.getElementById('badge-vertical').value = 'quick';
+                document.getElementById('badge-name').value = '성실 배송';
+                document.getElementById('badge-acquisition-method').value = '퀵 서비스 100회 이상 배송';
+                document.getElementById('rewards-url').value = 'https://example.com/rewards/quick-delivery';
+                document.querySelector('input[name="level_apply"][value="Y"]').checked = true;
+                toggleLevelSettings(true);
+                document.querySelectorAll('[id^="edit-only-level-id-"]').forEach(d => d.style.display = 'block');
+                document.getElementById('display-level-id-blue').textContent = 'BDG002-L1';
+                document.getElementById('display-level-id-red').textContent = 'BDG002-L2';
+                document.getElementById('display-level-id-purple').textContent = 'BDG002-L3';
+                document.getElementById('level-blue-image').value = 'https://example.com/badge_blue.png';
+                addReward('blue');
+            }
+        } else {
+            pageTitle.textContent = '배지 생성';
+            addReward('global');
+        }
+        updateBadgeNamePreview();
+    }
+    
+    function toggleLevelSettings(show) {
+        levelDetailsContainer.style.display = show ? 'block' : 'none';
+        globalRewardSettings.style.display = show ? 'none' : 'block';
+        nonLevelBadgeImageGroup.style.display = show ? 'none' : 'block';
+    }
+
+    function addReward(levelPrefix) {
+        const rewardIndex = rewardCounter++;
+        const container = document.getElementById(`rewards-container-${levelPrefix}`);
+        const newRewardHTML = `
+            <div class="reward-entry" id="reward-entry-${levelPrefix}-${rewardIndex}">
+                <div class="entry-controls">
+                    <div class="order-controls">
+                        <span class="order-label">순서 변경</span>
+                        <button type="button" class="btn-control" title="순서 위로" onclick="moveReward(this, 'up')">▲</button>
+                        <button type="button" class="btn-control" title="순서 아래로" onclick="moveReward(this, 'down')">▼</button>
+                    </div>
+                    <button type="button" class="btn-delete" onclick="this.closest('.reward-entry').remove()">삭제</button>
+                </div>
+                <div class="form-group">
+                    <label>보상 제공 타입</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="reward_type_${levelPrefix}_${rewardIndex}" value="item" onchange="handleRewardTypeChange(this, '${levelPrefix}', ${rewardIndex})"> 아이템</label>
+                        <label><input type="radio" name="reward_type_${levelPrefix}_${rewardIndex}" value="function" onchange="handleRewardTypeChange(this, '${levelPrefix}', ${rewardIndex})"> 기능</label>
+                        <label><input type="radio" name="reward_type_${levelPrefix}_${rewardIndex}" value="activity_energy" onchange="handleRewardTypeChange(this, '${levelPrefix}', ${rewardIndex})"> 활동 에너지</label>
+                    </div>
+                </div>
+                
+                <div class="sub-options">
+                    <div id="item-options-${levelPrefix}-${rewardIndex}" style="display:none;">
+                        <div class="form-group">
+                            <label>아이템 선택</label>
+                            <select>
+                                <option>단독배정권</option>
+                                <option>프로단독배정권</option>
+                                <option>서포트모드</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="function-options-${levelPrefix}-${rewardIndex}" style="display:none;"></div>
+                    <div id="quantity-options-${levelPrefix}-${rewardIndex}" style="display:none;">
+                         <div class="form-group">
+                            <label>제공 수량</label>
+                            <div class="payout-time-group">
+                                <input type="number" min="1" max="10" value="1" style="width: 80px;">
+                                <label>개</label>
+                            </div>
+                        </div>
+                        <div class="form-group repetition-group">
+                            <label>반복 여부</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="repeat_${levelPrefix}_${rewardIndex}" value="N" checked onchange="handleCycleChange(this, '${levelPrefix}', ${rewardIndex})"> 1회성</label>
+                                <label><input type="radio" name="repeat_${levelPrefix}_${rewardIndex}" value="Y" onchange="handleCycleChange(this, '${levelPrefix}', ${rewardIndex})"> 반복</label>
+                            </div>
+                        </div>
+                        <div id="cycle-options-${levelPrefix}-${rewardIndex}" class="form-group" style="display:none;">
+                            <label>반복 주기</label>
+                             <select onchange="handleCycleDetailChange(this, '${levelPrefix}', ${rewardIndex})">
+                                <option value="daily" selected>일</option>
+                                <option value="weekly">주</option>
+                                <option value="monthly">월</option>
+                            </select>
+                             <div id="cycle-details-${levelPrefix}-${rewardIndex}" class="sub-options" style="margin-top:10px;">
+                                <div id="daily-payout-${levelPrefix}-${rewardIndex}" class="payout-time-group">
+                                    <label>지급 시간</label><input type="time">
+                                </div>
+                                <div id="weekly-payout-${levelPrefix}-${rewardIndex}" class="payout-time-group" style="display:none;">
+                                    <select><option>월</option><option>화</option><option>수</option><option>목</option><option>금</option><option>토</option><option>일</option></select>
+                                    <label>요일</label><input type="time">
+                                </div>
+                                <div id="monthly-payout-${levelPrefix}-${rewardIndex}" class="payout-time-group" style="display:none;">
+                                     <input type="number" min="1" max="31" style="width: 80px;"><label>일</label><input type="time">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        container.insertAdjacentHTML('beforeend', newRewardHTML);
+        const newEntry = document.getElementById(`reward-entry-${levelPrefix}-${rewardIndex}`);
+        updateRewardOptionsForVertical(newEntry);
+    }
+
+    function handleRewardTypeChange(radio, levelPrefix, rewardIndex) {
+        const quantityDiv = document.getElementById(`quantity-options-${levelPrefix}-${rewardIndex}`);
+        const itemDiv = document.getElementById(`item-options-${levelPrefix}-${rewardIndex}`);
+        const functionDiv = document.getElementById(`function-options-${levelPrefix}-${rewardIndex}`);
+        
+        quantityDiv.style.display = 'none';
+        itemDiv.style.display = 'none';
+        functionDiv.style.display = 'none';
+        
+        if (radio.value === 'activity_energy') {
+            quantityDiv.style.display = 'grid';
+        } else if (radio.value === 'item') {
+            itemDiv.style.display = 'block';
+            quantityDiv.style.display = 'grid';
+        } else if (radio.value === 'function') {
+            functionDiv.style.display = 'block';
+        }
+    }
+    
+    function handleVerticalChange() {
+        updateBadgeNamePreview();
+        document.querySelectorAll('.reward-entry').forEach(entry => {
+            updateRewardOptionsForVertical(entry);
+        });
+    }
+    
+    function updateRewardOptionsForVertical(rewardEntry) {
+        const functionOptionsDiv = rewardEntry.querySelector('[id^="function-options-"]');
+        
+        const functionHTML = `<div class="form-group"><label>기능 선택</label><div class="checkbox-group">
+            <label><input type="checkbox"> 수요지도</label>
+            <label><input type="checkbox"> 함께 이동하기</label>
+            <label><input type="checkbox"> 맞춤콜</label>
+        </div></div>`;
+        functionOptionsDiv.innerHTML = functionHTML;
+    }
+
+    function handleCycleChange(radio, levelPrefix, rewardIndex) {
+        const cycleDiv = document.getElementById(`cycle-options-${levelPrefix}-${rewardIndex}`);
+        cycleDiv.style.display = radio.value === 'Y' ? 'block' : 'none';
+        if (radio.value === 'Y') {
+            const select = cycleDiv.querySelector('select');
+            handleCycleDetailChange(select, levelPrefix, rewardIndex);
+        } else {
+            const detailsDiv = document.getElementById(`cycle-details-${levelPrefix}-${rewardIndex}`);
+            if (detailsDiv) detailsDiv.style.display = 'none';
+        }
+    }
+
+    function handleCycleDetailChange(select, levelPrefix, rewardIndex) {
+        const detailsDiv = document.getElementById(`cycle-details-${levelPrefix}-${rewardIndex}`);
+        document.getElementById(`daily-payout-${levelPrefix}-${rewardIndex}`).style.display = 'none';
+        document.getElementById(`weekly-payout-${levelPrefix}-${rewardIndex}`).style.display = 'none';
+        document.getElementById(`monthly-payout-${levelPrefix}-${rewardIndex}`).style.display = 'none';
+
+        detailsDiv.style.display = 'block';
+        if (select.value === 'daily') {
+            document.getElementById(`daily-payout-${levelPrefix}-${rewardIndex}`).style.display = 'flex';
+        } else if (select.value === 'weekly') {
+            document.getElementById(`weekly-payout-${levelPrefix}-${rewardIndex}`).style.display = 'flex';
+        } else if (select.value === 'monthly') {
+            document.getElementById(`monthly-payout-${levelPrefix}-${rewardIndex}`).style.display = 'flex';
+        }
+    }
+
+    function moveReward(button, direction) {
+        const entry = button.closest('.reward-entry');
+        if (direction === 'up') {
+            const prevSibling = entry.previousElementSibling;
+            if (prevSibling) {
+                entry.parentElement.insertBefore(entry, prevSibling);
+            }
+        } else if (direction === 'down') {
+            const nextSibling = entry.nextElementSibling;
+            if (nextSibling) {
+                entry.parentElement.insertBefore(nextSibling, entry);
+            }
+        }
+    }
+
+    function applyRewardsToAllLevels() {
+        if (!confirm("블루 레벨의 보상을 레드, 퍼플 레벨에 복사하시겠습니까?\n기존에 입력된 레드, 퍼플 레벨의 보상은 모두 삭제됩니다.")) {
+            return;
+        }
+        alert("블루 레벨의 보상이 레드, 퍼플 레벨에 복사되었습니다.");
+    }
+</script>
+
+</body>
+</html>
