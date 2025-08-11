@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>배지 관리</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         /* 공통 스타일 */
         body {
@@ -59,6 +60,9 @@
         .form-group.repetition-group {
             margin-top: 8px;
         }
+        .form-group.reward-label-group {
+            margin-top: 24px;
+        }
         .form-group label {
             font-size: 14px;
             font-weight: 600;
@@ -78,6 +82,9 @@
             color: #4e5968;
             margin: 0;
         }
+        .form-display-text.empty {
+            color: #8b95a1;
+        }
         .form-group input::placeholder, .form-group textarea::placeholder {
             color: #adb5bd;
         }
@@ -88,19 +95,20 @@
             font-size: 15px;
             font-family: inherit;
         }
+        .form-group select.custom-select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333d4b%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 12px top 50%;
+            background-size: 10px auto;
+            padding-right: 36px;
+        }
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
             outline: none;
             border-color: #0070f3;
             box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2);
-        }
-        /* 배지 이미지 레이아웃 명시적 수정 */
-        #non-level-badge-image-group label {
-            display: block;
-        }
-        #non-level-badge-image-group input[type="text"] {
-            display: block;
-            width: 100%;
-            box-sizing: border-box;
         }
         .form-actions {
             display: flex;
@@ -123,8 +131,10 @@
             text-align: center;
         }
         .btn-small {
-            padding: 6px 12px;
+            padding: 4px 10px;
             font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
         }
         .btn-primary {
             background-color: #0070f3;
@@ -147,7 +157,7 @@
         }
         .data-table th, .data-table td {
             border-bottom: 1px solid #e5e8eb;
-            padding: 12px;
+            padding: 16px;
             text-align: left;
             font-size: 14px;
             vertical-align: middle;
@@ -155,6 +165,7 @@
         .data-table th {
             background-color: #f9fafb;
             font-weight: 600;
+            padding: 12px 16px;
         }
         .data-table tr:hover {
             background-color: #f0f4ff;
@@ -179,6 +190,9 @@
             border-radius: 8px;
             padding: 16px 24px 24px;
             margin-top: 12px;
+        }
+        .level-group .form-grid {
+            gap: 16px;
         }
         .level-group h4 {
             margin: 0 0 12px 0;
@@ -256,6 +270,11 @@
         .info-box ul li::marker {
             color: #0070f3;
         }
+        .info-box ul li a {
+            color: #0070f3;
+            text-decoration: none;
+            font-weight: 600;
+        }
         .sub-options {
             padding-left: 0; 
             border-left: none; 
@@ -273,6 +292,43 @@
             color: #4e5968;
             margin-top: 8px;
         }
+        .drag-handle {
+            cursor: grab;
+            color: #8b95a1;
+            font-size: 16px;
+            text-align: center;
+        }
+        .status-pill {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
+            text-align: center;
+        }
+        .status-pill-blue {
+            background-color: #0070f3;
+        }
+        .status-pill-red {
+            background-color: #d9534f;
+        }
+        .image-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .image-input-group input {
+            flex-grow: 1;
+        }
+        .mission-id-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .mission-id-group p {
+            flex-grow: 1;
+        }
     </style>
 </head>
 <body>
@@ -280,89 +336,74 @@
 <div class="container">
     <header>
         <h1 id="page-title">배지 관리</h1>
-        <button id="create-badge-btn" class="btn btn-primary" onclick="showFormView()">배지 생성</button>
+        <button id="create-badge-btn" class="btn btn-primary" onclick="showFormView(null)">배지 생성</button>
     </header>
 
     <div id="list-view" class="content-area">
-        <div class="filter-grid">
-            <div class="form-group">
-                <label for="filter-badge-name">배지명</label>
-                <input type="text" id="filter-badge-name" placeholder="배지명을 입력하세요">
-            </div>
-            <div class="form-group">
-                <label for="filter-badge-type">배지 유형</label>
-                <select id="filter-badge-type">
-                    <option value="">전체</option>
-                    <option value="general">일반형</option>
-                    <option value="level">레벨형</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="filter-vertical">버티컬</label>
-                <select id="filter-vertical">
-                    <option value="">전체</option>
-                    <option value="common">공통</option>
-                    <option value="daeri">대리</option>
-                    <option value="quick">퀵</option>
-                    <option value="walk">도보</option>
-                    <option value="hancha">한차</option>
-                </select>
-            </div>
-            <div class="form-actions" style="border-top: none; margin-top: 0;">
-                <button class="btn btn-primary">검색</button>
-            </div>
+        <div class="info-box">
+            <h4>참고해주세요!</h4>
+            <ul>
+                <li>각 행의 ☰ 아이콘을 드래그하여 노출 우선순위를 변경할 수 있습니다.</li>
+                <li>배지를 등록했더라도, 미션 어드민에서 '배지와 연동된 미션'을 활성화해야만 최종적으로 사용자에게 배지가 노출됩니다.</li>
+                <li><a href="#">배지 정책 자세히보기 ></a></li>
+            </ul>
         </div>
 
         <table class="data-table">
             <thead>
                 <tr>
+                    <th>순서</th>
                     <th>배지 ID</th>
-                    <th>배지명</th>
+                    <th>노출 배지명</th>
                     <th>배지 유형</th>
                     <th>버티컬</th>
                     <th>미션 연동</th>
-                    <th>수정일</th>
+                    <th>최종 수정일</th>
                     <th>관리</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="badge-list-body">
                  <tr>
+                    <td><span class="drag-handle">☰</span> 1</td>
                     <td>BDG004</td>
                     <td>우수 활동 배지</td>
                     <td>일반형</td>
-                    <td>한차</td>
-                    <td>대기</td>
+                    <td>한차배송</td>
+                    <td><span class="status-pill status-pill-red">대기</span></td>
                     <td>2025-08-05</td>
                     <td class="action-cell">
                         <a href="#" onclick="showFormView('BDG004')">수정</a>
                     </td>
                 </tr>
                  <tr>
+                    <td><span class="drag-handle">☰</span> 2</td>
                     <td>BDG003</td>
                     <td>단골손님 배지</td>
                     <td>일반형</td>
-                    <td>도보</td>
-                    <td>완료</td>
+                    <td>도보배송</td>
+                    <td><span class="status-pill status-pill-red">대기</span></td>
                     <td>2025-08-04</td>
                     <td class="action-cell">
                         <a href="#" onclick="showFormView('BDG003')">수정</a>
                     </td>
                 </tr>
                 <tr>
+                    <td><span class="drag-handle">☰</span> 3</td>
                     <td>BDG002</td>
                     <td>성실 배송 배지</td>
                     <td>레벨형</td>
-                    <td>퀵</td>
-                    <td>완료</td>
+                    <td>퀵배송</td>
+                    <td><span class="status-pill status-pill-blue">완료</span></td>
                     <td>2025-07-25</td>
                     <td class="action-cell"><a href="#" onclick="showFormView('BDG002')">수정</a></td>
                 </tr>
                 <tr>
+                    <td><span class="drag-handle">☰</span> 4</td>
                     <td>BDG001</td>
                     <td>첫 주문 완료 배지</td>
                     <td>일반형</td>
                     <td>공통</td>
-                    <td>완료</td>
+                    <td><span class="status-pill status-pill-blue">완료</span></td>
                     <td>2024-07-28</td>
                     <td class="action-cell">
                         <a href="#" onclick="showFormView('BDG001')">수정</a>
@@ -374,38 +415,39 @@
 
     <div id="form-view" class="content-area" style="display: none;">
         
-        <div class="info-box">
-            <h4>참고해주세요!</h4>
-            <ul>
-                <li>배지 획득 조건, 레벨 달성 조건은 ‘미션 어드민’에서 설정할 수 있습니다.</li>
-                <li>레벨이 있는 경우 레벨별 달성 조건 충족 즉시 업그레이드됩니다.</li>
-            </ul>
-        </div>
-        
         <form id="badge-form">
             <div class="form-section">
-                <div id="edit-only-id-display" class="form-grid" style="display: none; margin-bottom: -12px;">
+                <div id="edit-only-id-display" class="form-grid" style="display: none; margin-bottom: 24px;">
                     <div class="form-group">
                         <label>배지 ID</label>
                         <p id="display-badge-id" class="form-display-text"></p>
+                    </div>
+                     <div id="non-level-mission-id" class="form-group" style="display: none; margin-top: 24px;">
+                        <label>연동 미션 ID</label>
+                        <div class="mission-id-group">
+                             <p id="display-mission-id" class="form-display-text"></p>
+                             <button type="button" class="btn btn-secondary btn-small">연동 미션 자세히 보기</button>
+                        </div>
                     </div>
                 </div>
                 <div class="form-grid">
                      <div class="form-group">
                         <label for="badge-vertical">등록 버티컬</label>
-                        <select id="badge-vertical" onchange="handleVerticalChange()">
+                        <select id="badge-vertical" class="custom-select" onchange="handleVerticalChange()">
                             <option value="common">공통</option>
                             <option value="daeri">대리</option>
-                            <option value="quick">퀵</option>
-                            <option value="walk">도보</option>
-                            <option value="hancha">한차</option>
+                            <option value="quick">퀵배송</option>
+                            <option value="walk">도보배송</option>
+                            <option value="hancha">한차배송</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="badge-name">배지명</label>
-                        <input type="text" id="badge-name" placeholder="사용자에게 보여지는 배지명(배지 문구 작성 X, 최대 n글자)">
+                        <input type="text" id="badge-name" placeholder="배지 획득 측정 지표단위로 작성해주세요.">
                         <div id="badge-name-preview-container">
-                            노출 배지명: <strong id="badge-name-preview"></strong>
+                            노출 배지명: 
+                            <small id="badge-name-preview-guide">'등록 버티컬' + '배지명' + '배지' 조합으로 유저에게 보여지는 배지명이 자동 생성됩니다.</small>
+                            <strong id="badge-name-preview" style="display: none;"></strong>
                         </div>
                     </div>
                      <div class="form-group">
@@ -426,15 +468,18 @@
             <div class="form-section">
                 <div class="form-grid">
                      <div class="form-group">
-                        <label>레벨 적용 여부<span class="optional-text">(선택)</span></label>
+                        <label>레벨 적용 여부</label>
                         <div class="radio-group">
                             <label><input type="radio" name="level_apply" value="N" checked onchange="toggleLevelSettings(false)"> 미적용</label>
                             <label><input type="radio" name="level_apply" value="Y" onchange="toggleLevelSettings(true)"> 적용</label>
                         </div>
                     </div>
                     <div id="non-level-badge-image-group" class="form-group">
-                        <label for="badge-image">배지 이미지</label>
-                        <input type="text" id="badge-image" placeholder="배지 이미지 URL을 입력하세요">
+                         <label for="badge-image">배지 이미지</label>
+                        <div class="image-input-group">
+                            <input type="text" id="badge-image" placeholder="이미지 URL을 입력하거나 이미지를 첨부하세요.">
+                            <button type="button" class="btn btn-secondary btn-small">이미지 첨부</button>
+                        </div>
                     </div>
                 </div>
                 <div id="level-details-container" style="display: none;">
@@ -443,61 +488,94 @@
                     </div>
                     <div class="level-group">
                         <h4>블루</h4>
-                        <div id="edit-only-level-id-blue-display" class="form-grid" style="display: none; margin-bottom: 12px;">
-                             <div class="form-group">
+                        <div class="form-grid level-grid">
+                            <div id="edit-only-level-id-blue-display" class="form-group" style="display: none;">
                                 <label>레벨 ID</label>
                                 <p id="display-level-id-blue" class="form-display-text"></p>
                             </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="level-blue-image">배지 이미지</label>
-                            <input type="text" id="level-blue-image" placeholder="블루 레벨의 이미지 URL을 입력하세요">
+                            <div id="level-mission-id-blue" class="form-group" style="display: none;">
+                                <label>연동 미션 ID</label>
+                                <div class="mission-id-group">
+                                    <p id="display-mission-id-blue" class="form-display-text"></p>
+                                    <button type="button" class="btn btn-secondary btn-small">연동 미션 자세히 보기</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="level-blue-image">배지 이미지</label>
+                                <div class="image-input-group">
+                                    <input type="text" id="level-blue-image" placeholder="블루 레벨 이미지 URL">
+                                    <button type="button" class="btn btn-secondary btn-small">이미지 변경</button>
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group reward-label-group">
-                           <label>블루 레벨 보상</label>
+                           <label>블루 레벨 보상<span class="optional-text">(선택)</span></label>
+                           <small>※ 순서 변경 시 참고 사항 : [내 배지 페이지] ‘혜택'영역에 ‘1순위 보상 외 n개’로 노출, [배지 상세페이지]에는 등록한 보상이 순서대로 보여집니다.</small>
                         </div>
                          <div id="rewards-container-blue"></div>
-                         <div style="margin-top: 16px;">
+                         <div style="margin-top: 8px;">
                             <button type="button" class="btn btn-secondary" onclick="addReward('blue')">+ 블루 보상 추가</button>
                          </div>
                     </div>
                     <div class="level-group">
                         <h4>레드</h4>
-                        <div id="edit-only-level-id-red-display" class="form-grid" style="display: none; margin-bottom: 12px;">
-                             <div class="form-group">
+                        <div class="form-grid level-grid">
+                            <div id="edit-only-level-id-red-display" class="form-group" style="display: none;">
                                 <label>레벨 ID</label>
                                 <p id="display-level-id-red" class="form-display-text"></p>
                             </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="level-red-image">배지 이미지</label>
-                            <input type="text" id="level-red-image" placeholder="레드 레벨의 이미지 URL을 입력하세요">
+                             <div id="level-mission-id-red" class="form-group" style="display: none;">
+                                <label>연동 미션 ID</label>
+                                <div class="mission-id-group">
+                                    <p id="display-mission-id-red" class="form-display-text"></p>
+                                    <button type="button" class="btn btn-secondary btn-small">연동 미션 자세히 보기</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="level-red-image">배지 이미지</label>
+                                <div class="image-input-group">
+                                    <input type="text" id="level-red-image" placeholder="레드 레벨 이미지 URL">
+                                    <button type="button" class="btn btn-secondary btn-small">이미지 변경</button>
+                                </div>
+                            </div>
                         </div>
                          <div class="form-group reward-label-group">
-                           <label>레드 레벨 보상</label>
+                           <label>레드 레벨 보상<span class="optional-text">(선택)</span></label>
+                            <small>※ 순서 변경 시 참고 사항 : [내 배지 페이지] ‘혜택'영역에 ‘1순위 보상 외 n개’로 노출, [배지 상세페이지]에는 등록한 보상이 순서대로 보여집니다.</small>
                         </div>
                          <div id="rewards-container-red"></div>
-                         <div style="margin-top: 16px;">
+                         <div style="margin-top: 8px;">
                             <button type="button" class="btn btn-secondary" onclick="addReward('red')">+ 레드 보상 추가</button>
                          </div>
                     </div>
                      <div class="level-group">
                         <h4>퍼플</h4>
-                        <div id="edit-only-level-id-purple-display" class="form-grid" style="display: none; margin-bottom: 12px;">
-                             <div class="form-group">
+                        <div class="form-grid level-grid">
+                            <div id="edit-only-level-id-purple-display" class="form-group" style="display: none;">
                                 <label>레벨 ID</label>
                                 <p id="display-level-id-purple" class="form-display-text"></p>
                             </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="level-purple-image">배지 이미지</label>
-                            <input type="text" id="level-purple-image" placeholder="퍼플 레벨의 이미지 URL을 입력하세요">
+                            <div id="level-mission-id-purple" class="form-group" style="display: none;">
+                                <label>연동 미션 ID</label>
+                                <div class="mission-id-group">
+                                    <p id="display-mission-id-purple" class="form-display-text"></p>
+                                    <button type="button" class="btn btn-secondary btn-small">연동 미션 자세히 보기</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="level-purple-image">배지 이미지</label>
+                                <div class="image-input-group">
+                                    <input type="text" id="level-purple-image" placeholder="퍼플 레벨 이미지 URL">
+                                    <button type="button" class="btn btn-secondary btn-small">이미지 변경</button>
+                                </div>
+                            </div>
                         </div>
                          <div class="form-group reward-label-group">
-                           <label>퍼플 레벨 보상</label>
+                           <label>퍼플 레벨 보상<span class="optional-text">(선택)</span></label>
+                            <small>※ 순서 변경 시 참고 사항 : [내 배지 페이지] ‘혜택'영역에 ‘1순위 보상 외 n개’로 노출, [배지 상세페이지]에는 등록한 보상이 순서대로 보여집니다.</small>
                         </div>
                          <div id="rewards-container-purple"></div>
-                         <div style="margin-top: 16px;">
+                         <div style="margin-top: 8px;">
                             <button type="button" class="btn btn-secondary" onclick="addReward('purple')">+ 퍼플 보상 추가</button>
                          </div>
                     </div>
@@ -507,6 +585,7 @@
             <div id="global-reward-settings" class="form-section">
                  <div class="form-group">
                     <label>보상 설정<span class="optional-text">(선택)</span></label>
+                    <small>※ 순서 변경 시 참고 사항 : [내 배지 페이지] ‘혜택'영역에 ‘1순위 보상 외 n개’로 노출, [배지 상세페이지]에는 등록한 보상이 순서대로 보여집니다.</small>
                 </div>
                 <div id="rewards-container-global">
                 </div>
@@ -539,6 +618,21 @@
         const nameInput = document.getElementById('badge-name');
         verticalSelect.addEventListener('change', updateBadgeNamePreview);
         nameInput.addEventListener('input', updateBadgeNamePreview);
+        
+        const sortableList = document.getElementById('badge-list-body');
+        new Sortable(sortableList, {
+            handle: '.drag-handle',
+            animation: 150,
+            onEnd: function (evt) {
+                const rows = sortableList.querySelectorAll('tr');
+                rows.forEach((row, index) => {
+                    const orderCell = row.querySelector('td:first-child');
+                    if(orderCell){
+                         orderCell.innerHTML = `<span class="drag-handle">☰</span> ${index + 1}`;
+                    }
+                });
+            },
+        });
     });
 
     function updateBadgeNamePreview() {
@@ -546,12 +640,23 @@
         const verticalText = verticalSelect.options[verticalSelect.selectedIndex].text;
         const nameInput = document.getElementById('badge-name').value;
         const previewEl = document.getElementById('badge-name-preview');
+        const guideEl = document.getElementById('badge-name-preview-guide');
 
         if (nameInput.trim() !== '') {
+            guideEl.style.display = 'none';
+            previewEl.style.display = 'inline';
             previewEl.textContent = `${verticalText} ${nameInput} 배지`;
         } else {
-            previewEl.textContent = '';
+            guideEl.style.display = 'inline';
+            previewEl.style.display = 'none';
         }
+    }
+    
+    function showListView() {
+        pageTitle.textContent = '배지 관리';
+        createBtn.style.display = 'block';
+        listView.style.display = 'block';
+        formView.style.display = 'none';
     }
 
     function showFormView(badgeId) {
@@ -563,29 +668,55 @@
         document.querySelectorAll('[id^="rewards-container-"]').forEach(c => c.innerHTML = '');
         toggleLevelSettings(false);
         document.getElementById('edit-only-id-display').style.display = 'none';
+        document.getElementById('non-level-mission-id').style.display = 'none';
         document.querySelectorAll('[id^="edit-only-level-id-"]').forEach(d => d.style.display = 'none');
+        document.querySelectorAll('[id^="level-mission-id-"]').forEach(d => d.style.display = 'none');
         document.getElementById('badge-expiry-date').innerHTML = '다다음주 월요일 14:00 <span class="optional-text">(고정 정책)</span>';
+        document.getElementById('badge-vertical').disabled = false;
 
-        if (badgeId) {
+        if (badgeId) { 
             pageTitle.textContent = '배지 수정';
             document.getElementById('edit-only-id-display').style.display = 'block';
             document.getElementById('display-badge-id').textContent = badgeId;
-            if (badgeId === 'BDG002') {
+
+            if (badgeId === 'BDG002') { // 레벨 배지 수정 시뮬레이션
                 document.getElementById('badge-vertical').value = 'quick';
-                document.getElementById('badge-name').value = '성실 배송';
-                document.getElementById('badge-acquisition-method').value = '퀵 서비스 100회 이상 배송';
-                document.getElementById('rewards-url').value = 'https://example.com/rewards/quick-delivery';
+                document.getElementById('badge-name').value = '수행';
+                document.getElementById('badge-acquisition-method').value = '대리 수행을 통해 얻어보세요 어쩌구 저쩌구';
+                document.getElementById('rewards-url').value = 'http://';
                 document.querySelector('input[name="level_apply"][value="Y"]').checked = true;
                 toggleLevelSettings(true);
-                document.querySelectorAll('[id^="edit-only-level-id-"]').forEach(d => d.style.display = 'block');
-                document.getElementById('display-level-id-blue').textContent = 'BDG002-L1';
-                document.getElementById('display-level-id-red').textContent = 'BDG002-L2';
-                document.getElementById('display-level-id-purple').textContent = 'BDG002-L3';
-                document.getElementById('level-blue-image').value = 'https://example.com/badge_blue.png';
-                addReward('blue');
+                document.getElementById('badge-vertical').disabled = true;
+
+                // 레벨별 ID 및 미션 ID 채우기
+                ['blue', 'red', 'purple'].forEach((level, index) => {
+                    document.getElementById(`edit-only-level-id-${level}-display`).style.display = 'block';
+                    document.getElementById(`level-mission-id-${level}`).style.display = 'block';
+                    document.getElementById(`display-level-id-${level}`).textContent = `${badgeId}-L${index + 1}`;
+                    const missionIdEl = document.getElementById(`display-mission-id-${level}`);
+                    const missionId = `M-${badgeId}-L${index+1}`; // 예시 ID
+                    missionIdEl.textContent = missionId;
+                    missionIdEl.classList.remove('empty');
+                    document.getElementById(`level-${level}-image`).value = 'http://';
+                });
+
+                addReward('blue', {type: 'function', functions: ['수요지도', '함께 이동하기', '맞춤콜']});
+                addReward('red', {type: 'item', item: '프로단독배정권', quantity: 1, isRepeating: true, cycle: 'daily', time: '14:00'});
+                addReward('purple', {type: 'item', item: '프로단독배정권', quantity: 2, isRepeating: true, cycle: 'daily', time: '14:00'});
+                addReward('purple', {type: 'activity_energy', quantity: 5, isRepeating: false});
+
+            } else { // 일반 배지 수정 시뮬레이션
+                document.getElementById('badge-vertical').disabled = true;
+                document.querySelector('input[name="level_apply"][value="N"]').checked = true;
+                toggleLevelSettings(false);
+                const missionIdEl = document.getElementById('display-mission-id');
+                missionIdEl.textContent = '배지와 연동된 미션이 없습니다.';
+                missionIdEl.classList.add('empty');
             }
+
         } else {
             pageTitle.textContent = '배지 생성';
+            nonLevelBadgeImageGroup.querySelector('button').textContent = '이미지 첨부';
             addReward('global');
         }
         updateBadgeNamePreview();
@@ -595,9 +726,13 @@
         levelDetailsContainer.style.display = show ? 'block' : 'none';
         globalRewardSettings.style.display = show ? 'none' : 'block';
         nonLevelBadgeImageGroup.style.display = show ? 'none' : 'block';
+        
+        if(document.getElementById('edit-only-id-display').style.display === 'block'){
+             document.getElementById('non-level-mission-id').style.display = show ? 'none' : 'block';
+        }
     }
 
-    function addReward(levelPrefix) {
+    function addReward(levelPrefix, data = {}) {
         const rewardIndex = rewardCounter++;
         const container = document.getElementById(`rewards-container-${levelPrefix}`);
         const newRewardHTML = `
@@ -624,9 +759,9 @@
                         <div class="form-group">
                             <label>아이템 선택</label>
                             <select>
-                                <option>단독배정권</option>
-                                <option>프로단독배정권</option>
-                                <option>서포트모드</option>
+                                <option value="단독배정권">단독배정권</option>
+                                <option value="프로단독배정권">프로단독배정권</option>
+                                <option value="서포트모드">서포트모드</option>
                             </select>
                         </div>
                     </div>
@@ -672,6 +807,41 @@
         container.insertAdjacentHTML('beforeend', newRewardHTML);
         const newEntry = document.getElementById(`reward-entry-${levelPrefix}-${rewardIndex}`);
         updateRewardOptionsForVertical(newEntry);
+        
+        if(Object.keys(data).length > 0){
+            const typeRadio = newEntry.querySelector(`input[type="radio"][value="${data.type}"]`);
+            if(typeRadio) {
+                typeRadio.checked = true;
+                handleRewardTypeChange(typeRadio, levelPrefix, rewardIndex);
+            }
+            if(data.functions){
+                const funcDiv = newEntry.querySelector(`#function-options-${levelPrefix}-${rewardIndex}`);
+                data.functions.forEach(funcName => {
+                    const funcCheckbox = funcDiv.querySelector(`input[type="checkbox"][value="${funcName}"]`);
+                    if(funcCheckbox) funcCheckbox.checked = true;
+                });
+            }
+            if(data.item){
+                 newEntry.querySelector(`#item-options-${levelPrefix}-${rewardIndex} select`).value = data.item;
+            }
+            if(data.quantity){
+                 newEntry.querySelector(`#quantity-options-${levelPrefix}-${rewardIndex} input[type="number"]`).value = data.quantity;
+            }
+            if(data.isRepeating !== undefined){
+                const repeatRadio = newEntry.querySelector(`input[name^="repeat_"][value="${data.isRepeating ? 'Y' : 'N'}"]`);
+                if(repeatRadio){
+                    repeatRadio.checked = true;
+                    handleCycleChange(repeatRadio, levelPrefix, rewardIndex);
+                }
+            }
+            if(data.isRepeating && data.cycle){
+                const cycleSelect = newEntry.querySelector(`#cycle-options-${levelPrefix}-${rewardIndex} select`);
+                cycleSelect.value = data.cycle;
+                handleCycleDetailChange(cycleSelect, levelPrefix, rewardIndex);
+                const timeInput = newEntry.querySelector(`#${data.cycle}-payout-${levelPrefix}-${rewardIndex} input[type="time"]`);
+                if(timeInput) timeInput.value = data.time;
+            }
+        }
     }
 
     function handleRewardTypeChange(radio, levelPrefix, rewardIndex) {
@@ -704,9 +874,9 @@
         const functionOptionsDiv = rewardEntry.querySelector('[id^="function-options-"]');
         
         const functionHTML = `<div class="form-group"><label>기능 선택</label><div class="checkbox-group">
-            <label><input type="checkbox"> 수요지도</label>
-            <label><input type="checkbox"> 함께 이동하기</label>
-            <label><input type="checkbox"> 맞춤콜</label>
+            <label><input type="checkbox" value="수요지도"> 수요지도</label>
+            <label><input type="checkbox" value="함께 이동하기"> 함께 이동하기</label>
+            <label><input type="checkbox" value="맞춤콜"> 맞춤콜</label>
         </div></div>`;
         functionOptionsDiv.innerHTML = functionHTML;
     }
@@ -758,6 +928,41 @@
         if (!confirm("블루 레벨의 보상을 레드, 퍼플 레벨에 복사하시겠습니까?\n기존에 입력된 레드, 퍼플 레벨의 보상은 모두 삭제됩니다.")) {
             return;
         }
+
+        const blueRewards = [];
+        document.querySelectorAll('#rewards-container-blue .reward-entry').forEach(entry => {
+            const typeRadio = entry.querySelector('input[type="radio"]:checked');
+            if(!typeRadio) return;
+            const data = { type: typeRadio.value };
+            
+            if(data.type === 'item'){
+                data.item = entry.querySelector('[id^="item-options-"] select').value;
+            }
+            if(data.type === 'function'){
+                data.functions = Array.from(entry.querySelectorAll('[id^="function-options-"] input:checked')).map(cb => cb.value);
+            }
+            if(data.type === 'item' || data.type === 'activity_energy'){
+                data.quantity = entry.querySelector('[id^="quantity-options-"] input[type="number"]').value;
+                const repeatRadio = entry.querySelector('[id^="quantity-options-"] input[type="radio"]:checked');
+                data.isRepeating = repeatRadio.value === 'Y';
+                 if(data.isRepeating){
+                    const cycleSelect = entry.querySelector('[id^="cycle-options-"] select');
+                    data.cycle = cycleSelect.value;
+                    const timeInput = entry.querySelector(`#${data.cycle}-payout-${cycleSelect.id.split('-')[2]}-${cycleSelect.id.split('-')[3]} input[type="time"]`);
+                    if(timeInput) data.time = timeInput.value;
+                 }
+            }
+            blueRewards.push(data);
+        });
+
+        ['red', 'purple'].forEach(level => {
+            const container = document.getElementById(`rewards-container-${level}`);
+            container.innerHTML = ''; 
+            blueRewards.forEach(rewardData => {
+                addReward(level, rewardData);
+            });
+        });
+        
         alert("블루 레벨의 보상이 레드, 퍼플 레벨에 복사되었습니다.");
     }
 </script>
