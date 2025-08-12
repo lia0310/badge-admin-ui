@@ -61,7 +61,7 @@
             margin-top: 8px;
         }
         .form-group.reward-label-group {
-            margin-top: 24px;
+            margin-top: 32px;
         }
         .form-group label {
             font-size: 14px;
@@ -109,6 +109,26 @@
             outline: none;
             border-color: #0070f3;
             box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2);
+        }
+        .composite-input-group {
+            display: flex;
+            align-items: center;
+            font-size: 15px;
+        }
+        .composite-input-group span {
+            white-space: nowrap;
+            color: #4e5968;
+        }
+        .composite-input-group .badge-name-affix {
+           position: relative;
+           padding-bottom: 3px;
+           padding-left: 15px;
+           padding-right: 15px;
+           border-bottom: 1px solid #e0e0e0;
+        }
+        .composite-input-group input {
+           width: 300px;
+           margin: 0 10px;
         }
         .form-actions {
             display: flex;
@@ -255,10 +275,17 @@
             padding: 20px;
             margin-bottom: 24px;
         }
+        .info-box.notice {
+             background-color: #fffbe6;
+             border-color: #ffe58f;
+        }
         .info-box h4 {
             margin: 0 0 12px 0;
             font-size: 16px;
             color: #0056b3;
+        }
+        .info-box.notice h4 {
+            color: #d97706;
         }
         .info-box ul {
             margin: 0;
@@ -269,6 +296,9 @@
         }
         .info-box ul li::marker {
             color: #0070f3;
+        }
+        .info-box.notice ul li::marker {
+            color: #d97706;
         }
         .info-box ul li a {
             color: #0070f3;
@@ -286,11 +316,6 @@
             display: flex;
             gap: 10px;
             align-items: center;
-        }
-        #badge-name-preview-container {
-            font-size: 14px;
-            color: #4e5968;
-            margin-top: 8px;
         }
         .drag-handle {
             cursor: grab;
@@ -348,7 +373,6 @@
                 <li><a href="#">배지 정책 자세히보기 ></a></li>
             </ul>
         </div>
-
         <table class="data-table">
             <thead>
                 <tr>
@@ -415,6 +439,13 @@
 
     <div id="form-view" class="content-area" style="display: none;">
         
+        <div id="edit-mode-notice-box" class="info-box notice" style="display: none;">
+            <h4>수정 사항 반영 시점 안내</h4>
+            <ul>
+                <li>배지 수정 시, 수정된 내용은 수정 시점으로부터 다음 주기 시작에 반영됩니다.</li>
+            </ul>
+        </div>
+        
         <form id="badge-form">
             <div class="form-section">
                 <div id="edit-only-id-display" class="form-grid" style="display: none; margin-bottom: 24px;">
@@ -443,12 +474,22 @@
                     </div>
                     <div class="form-group">
                         <label for="badge-name">배지명</label>
-                        <input type="text" id="badge-name" placeholder="배지 획득 측정 지표단위로 작성해주세요.">
-                        <div id="badge-name-preview-container">
-                            노출 배지명: 
-                            <small id="badge-name-preview-guide">'등록 버티컬' + '배지명' + '배지' 조합으로 유저에게 보여지는 배지명이 자동 생성됩니다.</small>
-                            <strong id="badge-name-preview" style="display: none;"></strong>
+                        <div class="composite-input-group">
+                            <span id="badge-name-prefix" class="badge-name-affix">공통</span>
+                            <input type="text" id="badge-name" placeholder="배지명을 입력하세요">
+                            <span class="badge-name-affix">&nbsp;배지</span>
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label>배지 유형</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="badge_type" value="renewable" checked onchange="handleBadgeTypeChange(this)"> 갱신형</label>
+                            <label><input type="radio" name="badge_type" value="non-renewable" onchange="handleBadgeTypeChange(this)"> 비갱신형</label>
+                        </div>
+                    </div>
+                    <div id="renewal-cycle-group" class="form-group" style="display:none;">
+                         <label>갱신 주기</label>
+                         <p class="form-display-text">주간</p>
                     </div>
                      <div class="form-group">
                         <label for="badge-expiry-date">배지 만료 주기</label>
@@ -519,7 +560,7 @@
                     </div>
                     <div class="level-group">
                         <h4>레드</h4>
-                        <div class="form-grid level-grid">
+                         <div class="form-grid level-grid">
                             <div id="edit-only-level-id-red-display" class="form-group" style="display: none;">
                                 <label>레벨 ID</label>
                                 <p id="display-level-id-red" class="form-display-text"></p>
@@ -611,6 +652,7 @@
     const levelDetailsContainer = document.getElementById('level-details-container');
     const globalRewardSettings = document.getElementById('global-reward-settings');
     const nonLevelBadgeImageGroup = document.getElementById('non-level-badge-image-group');
+    const editModeNoticeBox = document.getElementById('edit-mode-notice-box');
     let rewardCounter = 0;
     
     document.addEventListener('DOMContentLoaded', () => {
@@ -638,18 +680,7 @@
     function updateBadgeNamePreview() {
         const verticalSelect = document.getElementById('badge-vertical');
         const verticalText = verticalSelect.options[verticalSelect.selectedIndex].text;
-        const nameInput = document.getElementById('badge-name').value;
-        const previewEl = document.getElementById('badge-name-preview');
-        const guideEl = document.getElementById('badge-name-preview-guide');
-
-        if (nameInput.trim() !== '') {
-            guideEl.style.display = 'none';
-            previewEl.style.display = 'inline';
-            previewEl.textContent = `${verticalText} ${nameInput} 배지`;
-        } else {
-            guideEl.style.display = 'inline';
-            previewEl.style.display = 'none';
-        }
+        document.getElementById('badge-name-prefix').textContent = verticalText;
     }
     
     function showListView() {
@@ -671,42 +702,34 @@
         document.getElementById('non-level-mission-id').style.display = 'none';
         document.querySelectorAll('[id^="edit-only-level-id-"]').forEach(d => d.style.display = 'none');
         document.querySelectorAll('[id^="level-mission-id-"]').forEach(d => d.style.display = 'none');
-        document.getElementById('badge-expiry-date').innerHTML = '다다음주 월요일 14:00 <span class="optional-text">(고정 정책)</span>';
         document.getElementById('badge-vertical').disabled = false;
+        handleBadgeTypeChange(document.querySelector('input[name="badge_type"]:checked'));
 
         if (badgeId) { 
             pageTitle.textContent = '배지 수정';
+            editModeNoticeBox.style.display = 'block';
             document.getElementById('edit-only-id-display').style.display = 'block';
             document.getElementById('display-badge-id').textContent = badgeId;
+            document.getElementById('badge-vertical').disabled = true;
 
             if (badgeId === 'BDG002') { // 레벨 배지 수정 시뮬레이션
                 document.getElementById('badge-vertical').value = 'quick';
                 document.getElementById('badge-name').value = '수행';
-                document.getElementById('badge-acquisition-method').value = '대리 수행을 통해 얻어보세요 어쩌구 저쩌구';
-                document.getElementById('rewards-url').value = 'http://';
                 document.querySelector('input[name="level_apply"][value="Y"]').checked = true;
                 toggleLevelSettings(true);
-                document.getElementById('badge-vertical').disabled = true;
-
-                // 레벨별 ID 및 미션 ID 채우기
+                
                 ['blue', 'red', 'purple'].forEach((level, index) => {
                     document.getElementById(`edit-only-level-id-${level}-display`).style.display = 'block';
                     document.getElementById(`level-mission-id-${level}`).style.display = 'block';
                     document.getElementById(`display-level-id-${level}`).textContent = `${badgeId}-L${index + 1}`;
                     const missionIdEl = document.getElementById(`display-mission-id-${level}`);
-                    const missionId = `M-${badgeId}-L${index+1}`; // 예시 ID
+                    const missionId = `M-${badgeId}-L${index+1}`; 
                     missionIdEl.textContent = missionId;
                     missionIdEl.classList.remove('empty');
-                    document.getElementById(`level-${level}-image`).value = 'http://';
                 });
-
-                addReward('blue', {type: 'function', functions: ['수요지도', '함께 이동하기', '맞춤콜']});
-                addReward('red', {type: 'item', item: '프로단독배정권', quantity: 1, isRepeating: true, cycle: 'daily', time: '14:00'});
-                addReward('purple', {type: 'item', item: '프로단독배정권', quantity: 2, isRepeating: true, cycle: 'daily', time: '14:00'});
-                addReward('purple', {type: 'activity_energy', quantity: 5, isRepeating: false});
-
             } else { // 일반 배지 수정 시뮬레이션
-                document.getElementById('badge-vertical').disabled = true;
+                document.getElementById('badge-vertical').value = 'hancha';
+                document.getElementById('badge-name').value = '우수 활동';
                 document.querySelector('input[name="level_apply"][value="N"]').checked = true;
                 toggleLevelSettings(false);
                 const missionIdEl = document.getElementById('display-mission-id');
@@ -716,6 +739,7 @@
 
         } else {
             pageTitle.textContent = '배지 생성';
+            editModeNoticeBox.style.display = 'none';
             nonLevelBadgeImageGroup.querySelector('button').textContent = '이미지 첨부';
             addReward('global');
         }
@@ -729,6 +753,18 @@
         
         if(document.getElementById('edit-only-id-display').style.display === 'block'){
              document.getElementById('non-level-mission-id').style.display = show ? 'none' : 'block';
+        }
+    }
+    
+    function handleBadgeTypeChange(radio){
+        const renewalCycleGroup = document.getElementById('renewal-cycle-group');
+        const expiryDateEl = document.getElementById('badge-expiry-date');
+        if(radio.value === 'renewable'){
+            renewalCycleGroup.style.display = 'block';
+            expiryDateEl.innerHTML = '다다음주 월요일 14:00 <span class="optional-text">(고정 정책)</span>';
+        } else {
+            renewalCycleGroup.style.display = 'none';
+            expiryDateEl.innerHTML = '없음 <span class="optional-text">(고정 정책)</span>';
         }
     }
 
@@ -761,7 +797,7 @@
                             <select>
                                 <option value="단독배정권">단독배정권</option>
                                 <option value="프로단독배정권">프로단독배정권</option>
-                                <option value="서포트모드">서포트모드</option>
+                                <option value="서포트모드">서포트모드권</option>
                             </select>
                         </div>
                     </div>
@@ -807,41 +843,6 @@
         container.insertAdjacentHTML('beforeend', newRewardHTML);
         const newEntry = document.getElementById(`reward-entry-${levelPrefix}-${rewardIndex}`);
         updateRewardOptionsForVertical(newEntry);
-        
-        if(Object.keys(data).length > 0){
-            const typeRadio = newEntry.querySelector(`input[type="radio"][value="${data.type}"]`);
-            if(typeRadio) {
-                typeRadio.checked = true;
-                handleRewardTypeChange(typeRadio, levelPrefix, rewardIndex);
-            }
-            if(data.functions){
-                const funcDiv = newEntry.querySelector(`#function-options-${levelPrefix}-${rewardIndex}`);
-                data.functions.forEach(funcName => {
-                    const funcCheckbox = funcDiv.querySelector(`input[type="checkbox"][value="${funcName}"]`);
-                    if(funcCheckbox) funcCheckbox.checked = true;
-                });
-            }
-            if(data.item){
-                 newEntry.querySelector(`#item-options-${levelPrefix}-${rewardIndex} select`).value = data.item;
-            }
-            if(data.quantity){
-                 newEntry.querySelector(`#quantity-options-${levelPrefix}-${rewardIndex} input[type="number"]`).value = data.quantity;
-            }
-            if(data.isRepeating !== undefined){
-                const repeatRadio = newEntry.querySelector(`input[name^="repeat_"][value="${data.isRepeating ? 'Y' : 'N'}"]`);
-                if(repeatRadio){
-                    repeatRadio.checked = true;
-                    handleCycleChange(repeatRadio, levelPrefix, rewardIndex);
-                }
-            }
-            if(data.isRepeating && data.cycle){
-                const cycleSelect = newEntry.querySelector(`#cycle-options-${levelPrefix}-${rewardIndex} select`);
-                cycleSelect.value = data.cycle;
-                handleCycleDetailChange(cycleSelect, levelPrefix, rewardIndex);
-                const timeInput = newEntry.querySelector(`#${data.cycle}-payout-${levelPrefix}-${rewardIndex} input[type="time"]`);
-                if(timeInput) timeInput.value = data.time;
-            }
-        }
     }
 
     function handleRewardTypeChange(radio, levelPrefix, rewardIndex) {
@@ -871,13 +872,30 @@
     }
     
     function updateRewardOptionsForVertical(rewardEntry) {
+        const vertical = document.getElementById('badge-vertical').value;
+        const itemOptionsDiv = rewardEntry.querySelector('[id^="item-options-"]');
         const functionOptionsDiv = rewardEntry.querySelector('[id^="function-options-"]');
         
-        const functionHTML = `<div class="form-group"><label>기능 선택</label><div class="checkbox-group">
-            <label><input type="checkbox" value="수요지도"> 수요지도</label>
-            <label><input type="checkbox" value="함께 이동하기"> 함께 이동하기</label>
-            <label><input type="checkbox" value="맞춤콜"> 맞춤콜</label>
-        </div></div>`;
+        let itemHTML = '';
+        if (vertical === 'daeri') {
+            itemHTML = `<div class="form-group"><label>아이템 선택</label><select><option>프로단독배정권</option><option>단독배정권</option></select></div>`;
+        } else if (vertical === 'quick') {
+            itemHTML = `<div class="form-group"><label>아이템 선택</label><select><option>서포트모드권</option></select></div>`;
+        }
+        itemOptionsDiv.innerHTML = itemHTML;
+        
+        let functionHTML = '';
+        if (vertical === 'daeri') {
+            functionHTML = `<div class="form-group"><label>기능 선택</label><div class="checkbox-group">
+                <label><input type="checkbox" value="수요지도"> 수요지도</label>
+                <label><input type="checkbox" value="함께 이동하기"> 함께 이동하기</label>
+                <label><input type="checkbox" value="맞춤콜"> 맞춤콜</label>
+            </div></div>`;
+        } else if (vertical === 'quick') {
+            functionHTML = `<div class="form-group"><label>기능 선택</label><div class="checkbox-group">
+                <label><input type="checkbox" value="수요지도"> 수요지도</label>
+            </div></div>`;
+        }
         functionOptionsDiv.innerHTML = functionHTML;
     }
 
